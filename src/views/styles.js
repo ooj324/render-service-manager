@@ -1074,11 +1074,174 @@ h1 {
   color: var(--text-primary);
 }
 
+/* 视图切换按钮 */
+.view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  border: 1px solid var(--border-light);
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.view-toggle-btn.active {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
 /* 服务网格 */
 .services-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
+}
+
+/* 列表视图 */
+.services-grid.list-view {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.services-grid.list-view .service-card {
+  border-radius: 0;
+  border-bottom: none;
+}
+
+.services-grid.list-view .service-card:first-child {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.services-grid.list-view .service-card:last-child {
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.services-grid.list-view .service-card:only-child {
+  border-radius: var(--radius-lg);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.services-grid.list-view .service-card:hover {
+  transform: none;
+  box-shadow: none;
+  background: var(--bg-paper);
+}
+
+.services-grid.list-view .service-card-header {
+  display: none;
+}
+
+.services-grid.list-view .service-card-body {
+  padding: 0.875rem 1.25rem;
+}
+
+.services-grid.list-view .service-status-row {
+  margin-bottom: 0;
+}
+
+.services-grid.list-view .service-info-grid {
+  display: none;
+}
+
+.services-grid.list-view .service-actions {
+  display: none;
+}
+
+/* 列表视图 - 展示一行式布局 */
+.service-list-row {
+  display: none;
+}
+
+.services-grid.list-view .service-list-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.services-grid.list-view .service-card-body {
+  padding: 0;
+}
+
+.service-list-name {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 140px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-list-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.service-list-badges .service-type,
+.service-list-badges .account-badge {
+  font-size: 9px;
+  padding: 2px 8px;
+}
+
+.service-list-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.service-list-meta .meta-item {
+  white-space: nowrap;
+}
+
+.service-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.service-list-actions .action-btn {
+  padding: 5px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+}
+
+.service-list-actions .action-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.service-list-actions .btn-text {
+  display: none;
 }
 
 .service-card {
@@ -1459,6 +1622,10 @@ h1 {
   overflow: hidden;
   transform: scale(0.95);
   transition: all 0.2s ease;
+}
+
+.modal-content.modal-wide {
+  max-width: 960px;
 }
 
 .modal.show .modal-content {
@@ -2112,6 +2279,54 @@ h1 {
   gap: 1rem;
 }
 
+.logs-right-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 自动刷新开关 */
+.auto-refresh-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.auto-refresh-toggle:hover {
+  border-color: var(--border-medium);
+  color: var(--text-primary);
+}
+
+.auto-refresh-toggle.active {
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+  color: white;
+}
+
+.auto-refresh-toggle .toggle-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.auto-refresh-toggle.active .toggle-dot {
+  background: #4ade80;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+  animation: pulse 2s infinite;
+}
+
 .logs-filters {
   display: flex;
   gap: 1rem;
@@ -2205,15 +2420,56 @@ h1 {
 .logs-container {
   font-family: var(--font-mono);
   font-size: 12px;
-  line-height: 1.6;
-  background: #1e1e1e;
-  color: #d4d4d4;
+  line-height: 1.7;
+  background: #1a1a2e;
+  color: #e0e0e0;
   padding: 1rem;
   overflow-x: auto;
   overflow-y: auto;
   max-height: calc(80vh - 180px);
+  white-space: pre-wrap;
+  word-break: break-all;
+  tab-size: 4;
 }
 
+.log-line {
+  padding: 1px 0;
+  line-height: 1.7;
+}
+
+.log-line:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.log-line .log-ts {
+  color: #6a9955;
+}
+
+.log-line .log-lv-error {
+  color: #f87171;
+  font-weight: 600;
+}
+
+.log-line .log-lv-warn {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.log-line .log-lv-info {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.log-line .log-lv-debug {
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.log-line .log-msg {
+  color: #e0e0e0;
+}
+
+/* 保留旧类以防兼容 */
 .log-entry {
   padding: 4px 8px;
   border-radius: 4px;
@@ -2395,12 +2651,34 @@ h1 {
   .services-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .services-grid.list-view {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* 响应式 - 小屏幕 */
 @media (max-width: 768px) {
   .services-grid {
     grid-template-columns: 1fr;
+  }
+
+  .services-grid.list-view {
+    grid-template-columns: 1fr;
+  }
+
+  .service-list-name {
+    min-width: 100px;
+    max-width: 140px;
+    font-size: 13px;
+  }
+
+  .service-list-meta {
+    display: none;
+  }
+
+  .view-toggle {
+    display: flex;
   }
 
   .notification {
@@ -2609,6 +2887,10 @@ h1 {
     max-height: 90vh;
     margin: 0.5rem;
     border-radius: 16px;
+  }
+
+  .modal-content.modal-wide {
+    max-width: none;
   }
 
   .modal-content.modal-large {

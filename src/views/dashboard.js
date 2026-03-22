@@ -113,6 +113,21 @@ export function renderDashboard() {
               <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
+          <div class="view-toggle" id="viewToggle">
+            <button type="button" class="view-toggle-btn active" data-view="card" title="卡片视图">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/>
+                <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/>
+                <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/>
+                <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+            <button type="button" class="view-toggle-btn" data-view="list" title="列表视图">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -238,7 +253,7 @@ export function renderDashboard() {
 
   <!-- 日志查看模态框 -->
   <div id="logsModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content modal-wide">
       <div class="modal-header">
         <div>
           <div class="modal-title-section">
@@ -272,11 +287,17 @@ export function renderDashboard() {
             </select>
           </div>
         </div>
-        <button class="refresh-btn" data-action="refresh-logs" type="button" title="刷新日志">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4.01 7.58 4.01 12C4.01 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z" fill="currentColor"/>
-          </svg>
-        </button>
+        <div class="logs-right-controls">
+          <button class="auto-refresh-toggle" id="autoRefreshToggle" data-action="toggle-auto-refresh" type="button" title="自动刷新">
+            <span class="toggle-dot"></span>
+            <span id="autoRefreshText">自动刷新</span>
+          </button>
+          <button class="refresh-btn" data-action="refresh-logs" type="button" title="刷新日志">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4.01 7.58 4.01 12C4.01 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="modal-body logs-body">
         <div id="logsContainer" class="logs-container">

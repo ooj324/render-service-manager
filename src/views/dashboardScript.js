@@ -10,6 +10,42 @@ let allServices = [];
 let isFormVisible = false;
 let editingKey = null;
 let lastCachedAt = null;
+let currentViewMode = 'card';
+let logsAutoRefreshTimer = null;
+let isLogsAutoRefresh = false;
+const LOG_AUTO_REFRESH_INTERVAL = 5000;
+
+// 读取保存的设置
+function loadSettings() {
+  try {
+    const saved = localStorage.getItem('rsm_settings');
+    if (saved) {
+      const s = JSON.parse(saved);
+      if (s.viewMode) currentViewMode = s.viewMode;
+      if (s.logLevel) {
+        const el = document.getElementById('logLevelFilter');
+        if (el) el.value = s.logLevel;
+      }
+      if (s.logLimit) {
+        const el = document.getElementById('logLimitFilter');
+        if (el) el.value = s.logLimit;
+      }
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// 保存设置
+function saveSettings() {
+  try {
+    const logLevel = document.getElementById('logLevelFilter')?.value || '';
+    const logLimit = document.getElementById('logLimitFilter')?.value || '20';
+    localStorage.setItem('rsm_settings', JSON.stringify({
+      viewMode: currentViewMode,
+      logLevel: logLevel,
+      logLimit: logLimit
+    }));
+  } catch (e) { /* ignore */ }
+}
 
 // 禁止/恢复 body 滚动
 function lockBodyScroll() {
@@ -82,7 +118,11 @@ async function fetchServices(forceRefresh) {
     updateStats();
 
     document.getElementById('loading').style.display = 'none';
-    document.getElementById('services-container').style.display = 'grid';
+    const container = document.getElementById('services-container');
+    container.style.display = currentViewMode === 'list' ? 'grid' : 'grid';
+    container.style.display = '';
+    container.classList.toggle('list-view', currentViewMode === 'list');
+    container.style.display = 'grid';
 
     if (forceRefresh) {
       showNotification('数据已刷新', 'success');
@@ -373,8 +413,115 @@ function createServiceCard(service) {
   body.appendChild(infoGrid);
   body.appendChild(actions);
 
+  // 列表视图行
+  const listRow = document.createElement('div');
+  listRow.className = 'service-list-row';
+  listRow.style.padding = '0.875rem 1.25rem';
+
+  const listName = document.createElement('div');
+  listName.className = 'service-list-name';
+  listName.textContent = service?.name || '';
+  listName.title = service?.name || '';
+
+  const listStatus = document.createElement('div');
+  listStatus.className = 'service-status ' + statusClass;
+  listStatus.style.fontSize = '12px';
+  listStatus.style.padding = '4px 10px';
+  const listIndicator = document.createElement('div');
+  listIndicator.className = 'status-indicator';
+  listStatus.appendChild(listIndicator);
+  listStatus.appendChild(document.createTextNode(statusText));
+
+  const listBadges = document.createElement('div');
+  listBadges.className = 'service-list-badges';
+  const listTypeBadge = document.createElement('span');
+  listTypeBadge.className = 'service-type';
+  listTypeBadge.textContent = service?.type || '';
+  const listAccountBadge = document.createElement('span');
+  listAccountBadge.className = 'account-badge';
+  listAccountBadge.textContent = service?.accountName || '';
+  listBadges.appendChild(listTypeBadge);
+  listBadges.appendChild(listAccountBadge);
+
+  const listMeta = document.createElement('div');
+  listMeta.className = 'service-list-meta';
+
+  const listUpdated = document.createElement('div');
+  listUpdated.className = 'meta-item';
+  listUpdated.textContent = '更新于 ' + updatedDate;
+
+  const listRegion = document.createElement('div');
+  listRegion.className = 'meta-item';
+  listRegion.textContent = service?.region || 'N/A';
+
+  const listPlan = document.createElement('div');
+  listPlan.className = 'meta-item';
+  listPlan.textContent = service?.plan || 'N/A';
+
+  listMeta.appendChild(listUpdated);
+  listMeta.appendChild(listRegion);
+  listMeta.appendChild(listPlan);
+
+  const listActions = document.createElement('div');
+  listActions.className = 'service-list-actions';
+
+  function makeListBtn(cls, action, svgHtml, title, disabled) {
+    const btn = document.createElement('button');
+    btn.className = cls;
+    btn.dataset.action = action;
+    btn.dataset.accountId = String(service?.accountId || '');
+    btn.dataset.serviceId = String(service?.id || '');
+    btn.dataset.serviceName = String(service?.name || '');
+    btn.innerHTML = svgHtml;
+    btn.title = title;
+    if (disabled) btn.disabled = true;
+    return btn;
+  }
+
+  listActions.appendChild(
+    makeListBtn('action-btn env-vars-btn', 'env',
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 6H2V20C2 21.1 2.9 22 4 22H18V20H4V6ZM20 2H8C6.9 2 6 2.9 6 4V16C6 17.1 6.9 18 8 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM19 11H15V15H13V11H9V9H13V5H15V9H19V11Z" fill="currentColor"/></svg>',
+      '环境变量', false
+    )
+  );
+  listActions.appendChild(
+    makeListBtn('action-btn logs-btn', 'logs',
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 3H21V21H3V3ZM5 5V19H19V5H5ZM7 7H17V9H7V7ZM7 11H17V13H7V11ZM7 15H13V17H7V15Z" fill="currentColor"/></svg>',
+      '日志', false
+    )
+  );
+  listActions.appendChild(
+    makeListBtn('action-btn deploys-btn', 'deploys',
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M13 3C8.03 3 4 7.03 4 12H1L4.89 15.89L4.96 16.03L9 12H6C6 8.13 9.13 5 13 5S20 8.13 20 12S16.87 19 13 19C11.07 19 9.32 18.21 8.06 16.94L6.64 18.36C8.27 19.99 10.51 21 13 21C17.97 21 22 16.97 22 12S17.97 3 13 3ZM12 8V13L16.28 15.54L17 14.33L13.5 12.25V8H12Z" fill="currentColor"/></svg>',
+      '部署历史', false
+    )
+  );
+
+  if (service?.suspended === 'suspended') {
+    listActions.appendChild(
+      makeListBtn('action-btn resume-btn', 'resume',
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>',
+        '恢复', false
+      )
+    );
+  } else {
+    listActions.appendChild(
+      makeListBtn('action-btn suspend-btn', 'suspend',
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 19H10V5H6V19ZM14 5V19H18V5H14Z" fill="currentColor"/></svg>',
+        '暂停', false
+      )
+    );
+  }
+
+  listRow.appendChild(listName);
+  listRow.appendChild(listStatus);
+  listRow.appendChild(listBadges);
+  listRow.appendChild(listMeta);
+  listRow.appendChild(listActions);
+
   card.appendChild(header);
   card.appendChild(body);
+  card.appendChild(listRow);
 
   return card;
 }
@@ -822,7 +969,7 @@ async function fetchLogs() {
   } catch (error) {
     console.error('获取日志出错:', error);
     container.innerHTML = \`
-      <div class="empty-state" style="color: white;">
+      <div class="empty-state" style="color: #9ca3af; padding: 2rem; text-align: center;">
         <h3>加载日志出错</h3>
         <p>\${escapeHtml(error?.message || String(error))}</p>
       </div>
@@ -837,64 +984,126 @@ function refreshLogs() {
   }
 }
 
-// 渲染日志
+// 渲染日志 - 纯文本式显示
 function renderLogs(data) {
   const container = document.getElementById('logsContainer');
   const logs = data.logs || data || [];
 
   if (!logs || logs.length === 0) {
-    container.innerHTML = \`
-      <div class="empty-state" style="color: white; padding: 2rem;">
-        <h3>暂无日志</h3>
-        <p>此服务暂无日志记录，或所选级别没有日志。</p>
-      </div>
-    \`;
+    container.innerHTML = '';
+    const emptyDiv = document.createElement('div');
+    emptyDiv.style.cssText = 'color: #9ca3af; padding: 2rem; text-align: center;';
+    emptyDiv.textContent = '暂无日志记录，或所选级别没有日志。';
+    container.appendChild(emptyDiv);
     return;
   }
 
   container.innerHTML = '';
 
   logs.forEach(log => {
-    const logEntry = document.createElement('div');
-    logEntry.className = 'log-entry';
+    const line = document.createElement('div');
+    line.className = 'log-line';
 
     const timestamp = log.timestamp ? new Date(log.timestamp).toLocaleString('zh-CN') : '';
     const level = log.level || 'info';
     const message = log.message || log.text || JSON.stringify(log);
 
-    let levelClass = 'log-level-info';
+    let levelClass = 'log-lv-info';
     switch (level.toLowerCase()) {
-      case 'error':
-        levelClass = 'log-level-error';
-        break;
-      case 'warn':
-      case 'warning':
-        levelClass = 'log-level-warn';
-        break;
-      case 'debug':
-        levelClass = 'log-level-debug';
-        break;
+      case 'error': levelClass = 'log-lv-error'; break;
+      case 'warn': case 'warning': levelClass = 'log-lv-warn'; break;
+      case 'debug': levelClass = 'log-lv-debug'; break;
     }
 
-    logEntry.innerHTML = \`
-      <span class="log-timestamp">\${escapeHtml(timestamp)}</span>
-      <span class="log-level \${levelClass}">\${escapeHtml(level.toUpperCase())}</span>
-      <span class="log-message">\${escapeHtml(message)}</span>
-    \`;
+    if (timestamp) {
+      const ts = document.createElement('span');
+      ts.className = 'log-ts';
+      ts.textContent = timestamp;
+      line.appendChild(ts);
+      line.appendChild(document.createTextNode(' '));
+    }
 
-    container.appendChild(logEntry);
+    const lv = document.createElement('span');
+    lv.className = levelClass;
+    lv.textContent = '[' + level.toUpperCase() + ']';
+    line.appendChild(lv);
+    line.appendChild(document.createTextNode(' '));
+
+    const msg = document.createElement('span');
+    msg.className = 'log-msg';
+    msg.textContent = message;
+    line.appendChild(msg);
+
+    container.appendChild(line);
   });
+
+  // 滚动到底部
+  container.scrollTop = container.scrollHeight;
 }
 
 // 关闭日志模态框
 function closeLogsModal() {
   unlockBodyScroll();
+  stopLogsAutoRefresh();
   const modal = document.getElementById('logsModal');
   modal.classList.remove('show');
 
   currentLogsAccountId = '';
   currentLogsServiceId = '';
   currentLogsServiceName = '';
+}
+
+// 自动刷新日志
+function toggleLogsAutoRefresh() {
+  isLogsAutoRefresh = !isLogsAutoRefresh;
+  const toggle = document.getElementById('autoRefreshToggle');
+  const text = document.getElementById('autoRefreshText');
+
+  if (isLogsAutoRefresh) {
+    toggle?.classList.add('active');
+    if (text) text.textContent = '自动刷新中';
+    startLogsAutoRefresh();
+  } else {
+    toggle?.classList.remove('active');
+    if (text) text.textContent = '自动刷新';
+    stopLogsAutoRefresh();
+  }
+}
+
+function startLogsAutoRefresh() {
+  stopLogsAutoRefresh();
+  if (!currentLogsServiceId) return;
+  logsAutoRefreshTimer = setInterval(() => {
+    if (currentLogsServiceId) {
+      fetchLogs();
+    }
+  }, LOG_AUTO_REFRESH_INTERVAL);
+}
+
+function stopLogsAutoRefresh() {
+  if (logsAutoRefreshTimer) {
+    clearInterval(logsAutoRefreshTimer);
+    logsAutoRefreshTimer = null;
+  }
+}
+
+// 视图切换
+function setViewMode(mode) {
+  currentViewMode = mode;
+  const container = document.getElementById('services-container');
+  const toggleBtns = document.querySelectorAll('.view-toggle-btn');
+
+  if (mode === 'list') {
+    container?.classList.add('list-view');
+  } else {
+    container?.classList.remove('list-view');
+  }
+
+  toggleBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === mode);
+  });
+
+  saveSettings();
 }
 
 // 实例管理上下文
@@ -1648,6 +1857,11 @@ function initEventDelegation() {
       return;
     }
 
+    if (action === 'toggle-auto-refresh') {
+      toggleLogsAutoRefresh();
+      return;
+    }
+
     if (action === 'adjust-scale') {
       const delta = parseInt(actionElement.dataset.delta || '0', 10);
       adjustScale(delta);
@@ -1678,11 +1892,13 @@ function initEventDelegation() {
   const logLevelFilter = document.getElementById('logLevelFilter');
   logLevelFilter?.addEventListener('change', () => {
     refreshLogs();
+    saveSettings();
   });
 
   const logLimitFilter = document.getElementById('logLimitFilter');
   logLimitFilter?.addEventListener('change', () => {
     refreshLogs();
+    saveSettings();
   });
 
   const envVarKeyInput = document.getElementById('newEnvVarKey');
@@ -1700,6 +1916,15 @@ function initEventDelegation() {
 
   envVarKeyInput?.addEventListener('keydown', handleEnvVarFormKeydown);
   envVarValueInput?.addEventListener('keydown', handleEnvVarFormKeydown);
+
+  // 视图切换按钮
+  const viewToggle = document.getElementById('viewToggle');
+  viewToggle?.addEventListener('click', (event) => {
+    const btn = event.target.closest('.view-toggle-btn');
+    if (!btn) return;
+    const view = btn.dataset.view;
+    if (view) setViewMode(view);
+  });
 }
 
 // 自动调整文本区域大小
@@ -1827,7 +2052,14 @@ document.addEventListener('click', function(event) {
 
 // 初始化页面
 document.addEventListener('DOMContentLoaded', () => {
+  loadSettings();
   initEventDelegation();
+
+  // 恢复视图模式
+  if (currentViewMode === 'list') {
+    setViewMode('list');
+  }
+
   fetchServices();
 
   // 刷新按钮事件
