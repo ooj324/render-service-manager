@@ -57,7 +57,7 @@ export const HTTP_STATUS = {
 
 // Ping 保活配置
 export const PING_CONFIG = {
-  TIMEOUT_MS: 10000,        // 单次请求超时 10s
+  TIMEOUT_MS: 15000,        // 单次请求超时 10s
   MAX_RETRIES: 2,           // 最多重试 2 次
   RETRY_DELAY_MS: 1000,     // 重试基础间隔 1s（使用指数退避）
   BATCH_SIZE: 10,           // 每批并发数（提升性能）
