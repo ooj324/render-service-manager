@@ -159,9 +159,13 @@ function openAddModal() {
   editingAccountId = null;
   document.getElementById('modalTitle').textContent = '添加账户';
   document.getElementById('accountProvider').disabled = false;
-  document.getElementById('accountProvider').value = 'render';
+  document.getElementById('accountProvider').value = currentProvider;
   document.getElementById('accountName').value = '';
   document.getElementById('accountApiKey').value = '';
+  const orgIdGroup = document.getElementById('orgIdGroup');
+  if (orgIdGroup) { orgIdGroup.style.display = currentProvider === 'neon' ? 'block' : 'none'; }
+  const orgIdEl = document.getElementById('accountOrgId');
+  if (orgIdEl) orgIdEl.value = '';
   document.getElementById('apiKeyHint').style.display = 'none';
   document.getElementById('testResult').innerHTML = '';
   document.getElementById('accountModal').classList.add('show');
@@ -174,10 +178,15 @@ function openEditModal(accountId) {
 
   editingAccountId = accountId;
   document.getElementById('modalTitle').textContent = '编辑账户';
-  document.getElementById('accountProvider').value = account.provider || 'render';
+  const provider = account.provider || 'render';
+  document.getElementById('accountProvider').value = provider;
   document.getElementById('accountProvider').disabled = true;
   document.getElementById('accountName').value = account.name;
   document.getElementById('accountApiKey').value = '';
+  const orgIdGroup = document.getElementById('orgIdGroup');
+  if (orgIdGroup) { orgIdGroup.style.display = provider === 'neon' ? 'block' : 'none'; }
+  const orgIdEl = document.getElementById('accountOrgId');
+  if (orgIdEl) orgIdEl.value = account.orgId || '';
   document.getElementById('apiKeyHint').style.display = 'block';
   document.getElementById('testResult').innerHTML = '';
   document.getElementById('accountModal').classList.add('show');
@@ -206,10 +215,11 @@ async function testConnection() {
   testResult.innerHTML = '<div class="test-loading">正在验证...</div>';
 
   try {
+    const orgId = (document.getElementById('accountOrgId')?.value || '').trim();
     const response = await fetch('/api/accounts/test', {
       method: 'POST',
       headers: createHeaders(),
-      body: JSON.stringify({ apiKey, provider })
+      body: JSON.stringify({ apiKey, provider, orgId: orgId || undefined })
     });
 
     const result = await response.json();
@@ -293,10 +303,11 @@ async function saveAccount(event) {
       });
     } else {
       // 添加账户
+      const orgId = (document.getElementById('accountOrgId')?.value || '').trim();
       response = await fetch('/api/accounts', {
         method: 'POST',
         headers: createHeaders(),
-        body: JSON.stringify({ name, apiKey, provider })
+        body: JSON.stringify({ name, apiKey, provider, orgId: orgId || undefined })
       });
     }
 
@@ -546,6 +557,11 @@ export function renderAccountsPage() {
           <div class="form-group">
             <label class="form-label" for="accountName">账户名称</label>
             <input type="text" id="accountName" class="form-input" placeholder="为此账户起一个易于识别的名称" required>
+          </div>
+
+          <div class="form-group" id="orgIdGroup" style="display: none;">
+            <label class="form-label" for="accountOrgId">Organization ID <span style="color: #94a3b8; font-size: 0.8em;">(可选，企业版填写)</span></label>
+            <input type="text" id="accountOrgId" class="form-input" placeholder="org-xxxxxxxx">
           </div>
 
           <div class="form-group">

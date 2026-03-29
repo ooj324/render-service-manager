@@ -32,7 +32,7 @@ export async function handleAddAccount(request, env) {
       return jsonResponse({ error: parseError }, HTTP_STATUS.BAD_REQUEST);
     }
 
-    const { name, apiKey, provider = PROVIDER_TYPES.RENDER } = data || {};
+    const { name, apiKey, provider = PROVIDER_TYPES.RENDER, orgId } = data || {};
 
     if (!name || !name.trim()) {
       return jsonResponse({ error: '账户名称不能为空' }, HTTP_STATUS.BAD_REQUEST);
@@ -50,7 +50,7 @@ export async function handleAddAccount(request, env) {
     let ownerInfo;
     try {
       const apiModule = await providerDef.api();
-      ownerInfo = await apiModule.testApiKey(apiKey.trim());
+      ownerInfo = await apiModule.testApiKey(apiKey.trim(), orgId ? orgId.trim() : undefined);
     } catch (error) {
       return jsonResponse({
         error: 'API Key 无效或无法连接到提供商 API'
@@ -77,6 +77,7 @@ export async function handleAddAccount(request, env) {
       provider: provider,
       name: name.trim(),
       apiKey: apiKey.trim(),
+      ...(orgId && orgId.trim() ? { orgId: orgId.trim() } : {}),
       email: ownerInfo.ownerEmail,
       ownerName: ownerInfo.ownerName,
       ownerId: ownerInfo.ownerId,
@@ -216,7 +217,7 @@ export async function handleTestAccount(request, env) {
       return jsonResponse({ error: parseError }, HTTP_STATUS.BAD_REQUEST);
     }
 
-    const { apiKey, provider = PROVIDER_TYPES.RENDER } = data || {};
+    const { apiKey, provider = PROVIDER_TYPES.RENDER, orgId } = data || {};
 
     if (!apiKey || !apiKey.trim()) {
       return jsonResponse({ error: 'API Key 不能为空' }, HTTP_STATUS.BAD_REQUEST);
@@ -229,7 +230,7 @@ export async function handleTestAccount(request, env) {
 
     try {
       const apiModule = await providerDef.api();
-      const ownerInfo = await apiModule.testApiKey(apiKey.trim());
+      const ownerInfo = await apiModule.testApiKey(apiKey.trim(), orgId ? orgId.trim() : undefined);
       return jsonResponse({
         success: true,
         message: 'API Key 有效',

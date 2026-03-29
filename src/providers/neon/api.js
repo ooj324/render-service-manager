@@ -35,28 +35,36 @@ function getOptions(apiKey, method = 'GET', body = null) {
 /**
  * 测试 API Key 配置
  * @param {string} apiKey - Neon API 密钥
+ * @param {string} [orgId] - 组织 ID（可选）
  * @returns {Promise<Object>} 用户信息和权限
  */
-export async function testApiKey(apiKey) {
-  // 尝试获取项目列表作为认证测试
-  const response = await fetchWithRetry(`${NEON_API_BASE}/projects`, getOptions(apiKey, 'GET'));
+export async function testApiKey(apiKey, orgId) {
+  const url = orgId
+    ? `${NEON_API_BASE}/projects?org_id=${encodeURIComponent(orgId)}`
+    : `${NEON_API_BASE}/projects`;
+  const response = await fetchWithRetry(url, getOptions(apiKey, 'GET'));
   if (!response || !Array.isArray(response.projects)) {
     throw new Error('API 响应格式无法识别');
   }
   return {
     success: true,
-    ownerType: 'user',
-    ownerName: 'Neon Account',
-    ownerEmail: 'verified@neon.tech'
+    ownerType: orgId ? 'organization' : 'user',
+    ownerName: orgId ? orgId : 'Neon Account',
+    ownerEmail: orgId ? `org:${orgId}` : 'verified@neon.tech',
   };
 }
+
 /**
  * 获取项目列表
  * @param {string} apiKey - Neon API 密钥
+ * @param {string} [orgId] - 组织 ID（可选）
  * @returns {Promise<Array>} 项目列表
  */
-export async function listProjects(apiKey) {
-  const data = await fetchWithRetry(`${NEON_API_BASE}/projects`, getOptions(apiKey));
+export async function listProjects(apiKey, orgId) {
+  const url = orgId
+    ? `${NEON_API_BASE}/projects?org_id=${encodeURIComponent(orgId)}`
+    : `${NEON_API_BASE}/projects`;
+  const data = await fetchWithRetry(url, getOptions(apiKey));
   return data?.projects || [];
 }
 
@@ -138,4 +146,58 @@ export async function suspendEndpoint(apiKey, projectId, endpointId) {
 export async function listDatabases(apiKey, projectId, branchId) {
   const data = await fetchWithRetry(`${NEON_API_BASE}/projects/${projectId}/branches/${branchId}/databases`, getOptions(apiKey));
   return data?.databases || [];
+}
+
+/**
+ * 获取 Role 列表
+ * @param {string} apiKey - Neon API 密钥
+ * @param {string} projectId - 项目 ID
+ * @param {string} branchId - 分支 ID
+ * @returns {Promise<Array>} Role 列表
+ */
+export async function listRoles(apiKey, projectId, branchId) {
+  const data = await fetchWithRetry(`${NEON_API_BASE}/projects/${projectId}/branches/${branchId}/roles`, getOptions(apiKey));
+  return data?.roles || [];
+}
+
+/**
+ * 获取数据库完整连接 URI（含密码）
+ * @param {string} apiKey
+ * @param {string} projectId
+ * @param {string} branchId
+ * @param {string} endpointId
+ * @param {string} database
+ * @param {string} roleName
+ * @param {boolean} [pooled=false]
+ * @returns {Promise<string>} 连接 URI
+ */
+export async function getConnectionUri(apiKey, projectId, branchId, endpointId, database, roleName, pooled = false) {
+  const params = new URLSearchParams({
+    branch_id: branchId,
+    endpoint_id: endpointId,
+    database_name: database,
+    role_name: roleName,
+    pooled: pooled ? 'true' : 'false',
+  });
+  const data = await fetchWithRetry(
+    `${NEON_API_BASE}/projects/${projectId}/connection_uri?${params.toString()}`,
+    getOptions(apiKey)
+  );
+  return data?.uri || null;
+}
+
+/**
+ * 获取 Role 密码（明文）
+ * @param {string} apiKey
+ * @param {string} projectId
+ * @param {string} branchId
+ * @param {string} roleName
+ * @returns {Promise<string>} 密码
+ */
+export async function getRolePassword(apiKey, projectId, branchId, roleName) {
+  const data = await fetchWithRetry(
+    `${NEON_API_BASE}/projects/${projectId}/branches/${branchId}/roles/${encodeURIComponent(roleName)}/reveal_password`,
+    getOptions(apiKey)
+  );
+  return data?.password || null;
 }
