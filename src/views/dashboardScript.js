@@ -2060,13 +2060,34 @@ document.addEventListener('DOMContentLoaded', () => {
     setViewMode('list');
   }
 
+  window.currentProvider = 'render';
+
+  // Provider Tab Switching
+  document.querySelectorAll('.provider-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      document.querySelectorAll('.provider-tab').forEach(t => t.classList.remove('active'));
+      e.target.classList.add('active');
+      window.currentProvider = e.target.dataset.provider;
+      
+      if (window.currentProvider === 'neon') {
+        if (window.fetchNeonProjects) window.fetchNeonProjects(false);
+      } else {
+        fetchServices(false);
+      }
+    });
+  });
+
   fetchServices();
 
   // 刷新按钮事件
   const refreshBtn = document.getElementById('refreshBtn');
   if (refreshBtn) {
     refreshBtn.addEventListener('click', () => {
-      fetchServices(true);
+      if (window.currentProvider === 'neon') {
+        if (window.fetchNeonProjects) window.fetchNeonProjects(true);
+      } else {
+        fetchServices(true);
+      }
     });
   }
 });

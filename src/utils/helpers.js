@@ -2,7 +2,7 @@
  * 辅助工具函数
  */
 
-import { HTTP_STATUS, KV_KEYS, LOGIN_RATE_LIMIT } from '../config/constants.js';
+import { HTTP_STATUS, KV_KEYS, LOGIN_RATE_LIMIT, PROVIDER_TYPES } from '../config/constants.js';
 import { jsonResponse } from './response.js';
 
 /**
@@ -129,15 +129,29 @@ export async function withAccount(env, accountNameOrId, options, fn) {
 /**
  * 从 KV 读取账户列表
  * @param {Object} env - 环境变量
+ * @param {Object} [options] - 选项
+ * @param {string} [options.provider] - 按 provider 筛选
  * @returns {Promise<Array>} - 账户列表
  */
-export async function getAccounts(env) {
+export async function getAccounts(env, options = {}) {
   try {
     const accountsData = await env.RENDER_KV.get(KV_KEYS.ACCOUNTS);
     if (!accountsData) {
       return [];
     }
-    return JSON.parse(accountsData);
+    const accounts = JSON.parse(accountsData);
+    
+    // 向后兼容处理，没有 provider 的老数据默认是 render
+    const normalizedAccounts = accounts.map(acc => ({
+      ...acc,
+      provider: acc.provider || PROVIDER_TYPES.RENDER
+    }));
+
+    if (options.provider) {
+      return normalizedAccounts.filter(acc => acc.provider === options.provider);
+    }
+    
+    return normalizedAccounts;
   } catch (error) {
     console.error('获取账户配置失败:', error);
     return [];

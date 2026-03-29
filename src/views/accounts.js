@@ -62,7 +62,7 @@ function renderAccounts() {
           <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
         </svg>
         <h3>暂无账户</h3>
-        <p>添加您的第一个 Render 账户开始管理服务</p>
+        <p>添加您的第一个账户开始管理服务</p>
         <button class="add-account-btn" type="button" data-action="open-add-modal" style="margin-top: 1.5rem;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 5v14M5 12h14"/>
@@ -80,6 +80,12 @@ function renderAccounts() {
         <div class="service-header-top">
           <h3 class="service-name">\${escapeHtml(account.name)}</h3>
           <div class="service-badges">
+            <span class="account-type-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+              </svg>
+              \${account.provider === 'neon' ? 'Neon' : 'Render'}
+            </span>
             <span class="account-type-badge">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/>
@@ -149,6 +155,8 @@ function renderAccounts() {
 function openAddModal() {
   editingAccountId = null;
   document.getElementById('modalTitle').textContent = '添加账户';
+  document.getElementById('accountProvider').disabled = false;
+  document.getElementById('accountProvider').value = 'render';
   document.getElementById('accountName').value = '';
   document.getElementById('accountApiKey').value = '';
   document.getElementById('apiKeyHint').style.display = 'none';
@@ -163,6 +171,8 @@ function openEditModal(accountId) {
 
   editingAccountId = accountId;
   document.getElementById('modalTitle').textContent = '编辑账户';
+  document.getElementById('accountProvider').value = account.provider || 'render';
+  document.getElementById('accountProvider').disabled = true;
   document.getElementById('accountName').value = account.name;
   document.getElementById('accountApiKey').value = '';
   document.getElementById('apiKeyHint').style.display = 'block';
@@ -178,6 +188,7 @@ function closeAccountModal() {
 
 // 测试 API Key 连接
 async function testConnection() {
+  const provider = document.getElementById('accountProvider').value;
   const apiKey = document.getElementById('accountApiKey').value.trim();
   const testBtn = document.getElementById('testBtn');
   const testResult = document.getElementById('testResult');
@@ -195,7 +206,7 @@ async function testConnection() {
     const response = await fetch('/api/accounts/test', {
       method: 'POST',
       headers: createHeaders(),
-      body: JSON.stringify({ apiKey })
+      body: JSON.stringify({ apiKey, provider })
     });
 
     const result = await response.json();
@@ -244,6 +255,7 @@ async function testConnection() {
 async function saveAccount(event) {
   event.preventDefault();
 
+  const provider = document.getElementById('accountProvider').value;
   const name = document.getElementById('accountName').value.trim();
   const apiKey = document.getElementById('accountApiKey').value.trim();
   const submitBtn = document.getElementById('submitBtn');
@@ -281,7 +293,7 @@ async function saveAccount(event) {
       response = await fetch('/api/accounts', {
         method: 'POST',
         headers: createHeaders(),
-        body: JSON.stringify({ name, apiKey })
+        body: JSON.stringify({ name, apiKey, provider })
       });
     }
 
@@ -492,6 +504,14 @@ export function renderAccountsPage() {
       </div>
       <div class="modal-body">
         <form id="accountForm">
+          <div class="form-group">
+            <label class="form-label" for="accountProvider">服务提供商</label>
+            <select id="accountProvider" class="form-input">
+              <option value="render">Render</option>
+              <option value="neon" disabled>Neon (即将支持)</option>
+            </select>
+          </div>
+
           <div class="form-group">
             <label class="form-label" for="accountName">账户名称</label>
             <input type="text" id="accountName" class="form-input" placeholder="为此账户起一个易于识别的名称" required>

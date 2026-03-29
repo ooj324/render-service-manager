@@ -293,6 +293,54 @@ src/
 - 服务操作（暂停/恢复/重启/部署等）会自动失效对应账户的缓存
 - KV 存储 TTL 为 48 小时
 
+## 🛠️ 新增服务商开发指南 (Provider Integration Guide)
+
+系统现已重构为**多服务提供商注册机制**，你可以非常方便地接入诸如 Neon、HuggingFace 等新的平台。如需扩充新提供商，只需遵循本规范：
+
+### 1. 建立 Provider 目录
+在 \`src/providers/\` 下建设新服务商子树，例如：\`src/providers/huggingface/\`。
+
+### 2. 封装 API 客户端 (\`api.js\`)
+在目录下基于服务商提供的 REST API，封装标准调用。
+推荐通过引用 \`src/services/fetchClient.js\` 复用具有重试和超时容错拦截策略的底座请求通道。
+
+### 3. 实现业务处理器 (\`handlers.js\`)
+在这里串联 Request, API 与 Response：
+- 读取 \`getAccounts(env, 'huggingface')\` 以进行账户校验。
+- 在响应列表数据上，请尽量主动挂载 \`accountName\` 和 \`provider\` 属性以适配共用前端状态流。
+
+### 4. 声明内部路由 (\`routes.js\`)
+在此配置专属于该提供商的路由结构（基于明确的命名隔离要求，建议皆以前缀区分）：
+\`\`\`javascript
+export const staticRoutes = [
+  { path: '/api/huggingface/spaces', method: 'GET', handler: handleGetSpaces, auth: true },
+];
+export const dynamicRoutes = [
+  /* 动态正则路由 */
+];
+\`\`\`
+
+### 5. 在全局注册中心登记 (\`registry.js\`)
+前往 \`src/providers/registry.js\` 中开启该服务商字典（注册能力与声明是否接收 Cron 保活接管）：
+
+\`\`\`javascript
+export const providers = {
+  // ... 其他提供商
+  huggingface: {
+    name: 'HuggingFace',
+    needsKeepAlive: true,                     // 声明该类资源是否需要保活接管
+    api: () => import('./huggingface/api.js'),
+    handlers: () => import('./huggingface/handlers.js'),
+    routes: () => import('./huggingface/routes.js'),
+    keepAlive: () => import('./huggingface/keepAlive.js'), // 提供按 provider 拉起的心跳逻辑
+  }
+}
+\`\`\`
+完成后，返回 \`src/index.js\` 手动将上一步内的路由数组解构并合并入基础路由池。
+
+### 6. (可选) UI 特化接入
+如提供商具有私有的控制面板弹窗或者卡片，在提供商根目录下的 \`dashboard.js\` 中包裹导出，并在 \`src/views/dashboard.js\` 及 \`dashboardScript.js\` 内衔接触发 DOM 指令及 Tab 渲染。对于基础支持，只需在 \`src/views/accounts.js\` 中打开该提供商相关的账户选择即可。
+
 ## 🙏 致谢
 
 - [Render](https://render.com) - 提供优秀的部署平台

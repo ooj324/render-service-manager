@@ -1,26 +1,5 @@
 import { handleAuth, handleLogout } from './handlers/auth.js';
-import { handleGetServices, handleDeploy } from './handlers/services.js';
-import { handleGetEvents } from './handlers/events.js';
-import {
-  handleGetEnvVars,
-  handleUpdateAllEnvVars,
-  handleUpdateSingleEnvVar,
-  handleDeleteEnvVar
-} from './handlers/envVars.js';
-import {
-  handleGetServiceDetails,
-  handleSuspendService,
-  handleResumeService,
-  handleRestartService,
-  handleGetDeploys,
-  handleCancelDeploy,
-  handleRollbackDeploy
-} from './handlers/serviceControl.js';
-import {
-  handleGetInstances,
-  handleGetLogs,
-  handleScaleService
-} from './handlers/monitoring.js';
+
 import {
   handleGetAccounts,
   handleAddAccount,
@@ -35,15 +14,18 @@ import { jsonResponse } from './utils/response.js';
 import { getCookieValue, generateCsrfToken, getCookieSecurityAttribute } from './utils/helpers.js';
 import { HTTP_STATUS, CRON_CONFIG } from './config/constants.js';
 
+import { staticRoutes as renderStaticRoutes, dynamicRoutes as renderDynamicRoutes } from './providers/render/routes.js';
+import { staticRoutes as neonStaticRoutes, dynamicRoutes as neonDynamicRoutes } from './providers/neon/routes.js';
+
 /**
  * 静态路由配置
  */
 const routes = [
+  ...renderStaticRoutes,
+  ...neonStaticRoutes,
   { path: '/login', method: 'POST', handler: handleAuth, csrf: true },
   { path: '/login', method: 'GET', handler: (req, env) => handleMainPage(req, env, true) },
   { path: '/logout', method: 'POST', handler: handleLogout, auth: true },
-  { path: '/api/services', method: 'GET', handler: handleGetServices, auth: true },
-  { path: '/api/deploy', method: 'POST', handler: handleDeploy, auth: true },
   { path: '/api/accounts', method: 'GET', handler: handleGetAccounts, auth: true },
   { path: '/api/accounts', method: 'POST', handler: handleAddAccount, auth: true },
   { path: '/api/accounts/test', method: 'POST', handler: handleTestAccount, auth: true },
@@ -55,28 +37,11 @@ const routes = [
  * 动态路由配置
  */
 const dynamicRoutes = [
+  ...renderDynamicRoutes,
+  ...neonDynamicRoutes,
   // 账户管理路由
   { pattern: /^\/api\/accounts\/([^\/]+)$/, method: 'PUT', handler: handleUpdateAccount, auth: true },
   { pattern: /^\/api\/accounts\/([^\/]+)$/, method: 'DELETE', handler: handleDeleteAccount, auth: true },
-  // 事件和环境变量路由
-  { pattern: /^\/api\/events\/([^\/]+)\/([^\/]+)$/, method: 'GET', handler: handleGetEvents, auth: true },
-  { pattern: /^\/api\/env-vars\/([^\/]+)\/([^\/]+)$/, method: 'GET', handler: handleGetEnvVars, auth: true },
-  { pattern: /^\/api\/env-vars\/([^\/]+)\/([^\/]+)$/, method: 'PUT', handler: handleUpdateAllEnvVars, auth: true },
-  { pattern: /^\/api\/env-vars\/([^\/]+)\/([^\/]+)\/(.+)$/, method: 'PUT', handler: handleUpdateSingleEnvVar, auth: true },
-  { pattern: /^\/api\/env-vars\/([^\/]+)\/([^\/]+)\/(.+)$/, method: 'DELETE', handler: handleDeleteEnvVar, auth: true },
-  // 服务控制路由
-  { pattern: /^\/api\/services\/([^\/]+)\/([^\/]+)$/, method: 'GET', handler: handleGetServiceDetails, auth: true },
-  { pattern: /^\/api\/services\/([^\/]+)\/([^\/]+)\/suspend$/, method: 'POST', handler: handleSuspendService, auth: true },
-  { pattern: /^\/api\/services\/([^\/]+)\/([^\/]+)\/resume$/, method: 'POST', handler: handleResumeService, auth: true },
-  { pattern: /^\/api\/services\/([^\/]+)\/([^\/]+)\/restart$/, method: 'POST', handler: handleRestartService, auth: true },
-  // 部署管理路由
-  { pattern: /^\/api\/deploys\/([^\/]+)\/([^\/]+)$/, method: 'GET', handler: handleGetDeploys, auth: true },
-  { pattern: /^\/api\/deploys\/([^\/]+)\/([^\/]+)\/cancel$/, method: 'POST', handler: handleCancelDeploy, auth: true },
-  { pattern: /^\/api\/deploys\/([^\/]+)\/([^\/]+)\/rollback$/, method: 'POST', handler: handleRollbackDeploy, auth: true },
-  // 监控路由
-  { pattern: /^\/api\/instances\/([^\/]+)\/([^\/]+)$/, method: 'GET', handler: handleGetInstances, auth: true },
-  { pattern: /^\/api\/logs\/([^\/]+)\/([^\/]+)$/, method: 'GET', handler: handleGetLogs, auth: true },
-  { pattern: /^\/api\/services\/([^\/]+)\/([^\/]+)\/scale$/, method: 'POST', handler: handleScaleService, auth: true },
 ];
 
 /**

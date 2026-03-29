@@ -26,6 +26,15 @@ export const API_CONFIG = {
 // Render API 基础地址
 export const RENDER_API_BASE = 'https://api.render.com/v1';
 
+// Neon API 基础地址
+export const NEON_API_BASE = 'https://console.neon.tech/api/v2';
+
+// 支持的 Provider 类型
+export const PROVIDER_TYPES = {
+  RENDER: 'render',
+  NEON: 'neon',
+};
+
 // KV 存储键
 export const KV_KEYS = {
   ACCOUNTS: 'render:accounts',

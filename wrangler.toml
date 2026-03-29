@@ -7,9 +7,9 @@ compatibility_date = "2026-01-20"
 enabled = false
 
 # KV 命名空间绑定，部署后，请记得在控制台绑定
-# [[kv_namespaces]]
-# binding = "RENDER_KV"
-# id = ""
+[[kv_namespaces]]
+binding = "RENDER_KV"
+id = "YOUR_KV_NAMESPACE_ID"
 
 # 定时任务触发器
 [triggers]
