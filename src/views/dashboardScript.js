@@ -100,7 +100,7 @@ async function fetchServices(forceRefresh) {
   }
 
   try {
-    const url = forceRefresh ? '/api/services?refresh=true' : '/api/services';
+    const url = forceRefresh ? '/api/render/services?refresh=true' : '/api/render/services';
     const response = await apiJson(url);
 
     // 处理新的响应格式
@@ -584,7 +584,7 @@ async function deployService(accountId, serviceId, serviceName) {
   }
 
   try {
-    const result = await apiJson('/api/deploy', {
+    const result = await apiJson('/api/render/deploy', {
       method: 'POST',
       body: {
         accountId: accountId,
@@ -614,7 +614,7 @@ async function suspendService(accountId, serviceId, serviceName) {
   }
 
   try {
-    await apiJson(\`/api/services/\${accountId}/\${serviceId}/suspend\`, {
+    await apiJson(\`/api/render/services/\${accountId}/\${serviceId}/suspend\`, {
       method: 'POST'
     });
 
@@ -633,7 +633,7 @@ async function resumeService(accountId, serviceId, serviceName) {
   }
 
   try {
-    await apiJson(\`/api/services/\${accountId}/\${serviceId}/resume\`, {
+    await apiJson(\`/api/render/services/\${accountId}/\${serviceId}/resume\`, {
       method: 'POST'
     });
 
@@ -652,7 +652,7 @@ async function restartService(accountId, serviceId, serviceName) {
   }
 
   try {
-    await apiJson(\`/api/services/\${accountId}/\${serviceId}/restart\`, {
+    await apiJson(\`/api/render/services/\${accountId}/\${serviceId}/restart\`, {
       method: 'POST'
     });
 
@@ -696,7 +696,7 @@ async function openDeploysModal(accountId, serviceId, serviceName) {
   modal.classList.add('show');
 
   try {
-    const deploys = await apiJson(\`/api/deploys/\${accountId}/\${serviceId}\`);
+    const deploys = await apiJson(\`/api/render/deploys/\${accountId}/\${serviceId}\`);
     renderDeploys(deploys);
   } catch (error) {
     console.error('获取部署历史出错:', error);
@@ -869,7 +869,7 @@ async function cancelDeploy(deployId) {
   }
 
   try {
-    await apiJson(\`/api/deploys/\${currentDeployAccountId}/\${deployId}/cancel\`, {
+    await apiJson(\`/api/render/deploys/\${currentDeployAccountId}/\${deployId}/cancel\`, {
       method: 'POST'
     });
 
@@ -892,7 +892,7 @@ async function rollbackDeploy(deployId) {
   }
 
   try {
-    await apiJson(\`/api/deploys/\${currentDeployAccountId}/\${deployId}/rollback\`, {
+    await apiJson(\`/api/render/deploys/\${currentDeployAccountId}/\${deployId}/rollback\`, {
       method: 'POST'
     });
 
@@ -959,7 +959,7 @@ async function fetchLogs() {
   const limitFilter = document.getElementById('logLimitFilter').value;
 
   try {
-    let url = \`/api/logs/\${currentLogsAccountId}/\${currentLogsServiceId}?limit=\${limitFilter}\`;
+    let url = \`/api/render/logs/\${currentLogsAccountId}/\${currentLogsServiceId}?limit=\${limitFilter}\`;
     if (levelFilter) {
       url += \`&level=\${levelFilter}\`;
     }
@@ -1141,7 +1141,7 @@ async function openInstancesModal(accountId, serviceId, serviceName) {
   modal.classList.add('show');
 
   try {
-    const instances = await apiJson(\`/api/instances/\${accountId}/\${serviceId}\`);
+    const instances = await apiJson(\`/api/render/instances/\${accountId}/\${serviceId}\`);
     renderInstances(instances);
   } catch (error) {
     console.error('获取实例信息出错:', error);
@@ -1247,7 +1247,7 @@ async function applyScale() {
   }
 
   try {
-    await apiJson(\`/api/services/\${currentInstancesAccountId}/\${currentInstancesServiceId}/scale\`, {
+    await apiJson(\`/api/render/services/\${currentInstancesAccountId}/\${currentInstancesServiceId}/scale\`, {
       method: 'POST',
       body: { numInstances }
     });
@@ -1299,7 +1299,7 @@ async function openEventsModal(accountId, serviceId, serviceName) {
   modal.classList.add('show');
 
   try {
-    const events = await apiJson(\`/api/events/\${accountId}/\${serviceId}\`);
+    const events = await apiJson(\`/api/render/events/\${accountId}/\${serviceId}\`);
     renderEvents(events);
   } catch (error) {
     console.error('获取事件日志出错:', error);
@@ -1427,7 +1427,7 @@ async function openEnvVarsModal(accountId, serviceId, serviceName) {
   modal.classList.add('show');
 
   try {
-    const envVars = await apiJson(\`/api/env-vars/\${currentAccountId}/\${currentServiceId}\`);
+    const envVars = await apiJson(\`/api/render/env-vars/\${currentAccountId}/\${currentServiceId}\`);
     allEnvVars = envVars;
     renderEnvVars(envVars);
   } catch (error) {
@@ -1594,7 +1594,7 @@ async function saveInlineEdit(key) {
   }
 
   try {
-    await apiJson(\`/api/env-vars/\${currentAccountId}/\${currentServiceId}/\${encodeURIComponent(key)}\`, {
+    await apiJson(\`/api/render/env-vars/\${currentAccountId}/\${currentServiceId}/\${encodeURIComponent(key)}\`, {
       method: 'PUT',
       body: {
         value: newValue
@@ -1630,7 +1630,7 @@ async function deleteEnvVar(key) {
   }
 
   try {
-    await apiJson(\`/api/env-vars/\${currentAccountId}/\${currentServiceId}/\${encodeURIComponent(key)}\`, {
+    await apiJson(\`/api/render/env-vars/\${currentAccountId}/\${currentServiceId}/\${encodeURIComponent(key)}\`, {
       method: 'DELETE',
       contentType: null
     });
@@ -1951,7 +1951,7 @@ async function addEnvVar() {
   }
 
   try {
-    const result = await apiJson(\`/api/env-vars/\${currentAccountId}/\${currentServiceId}/\${encodeURIComponent(key)}\`, {
+    const result = await apiJson(\`/api/render/env-vars/\${currentAccountId}/\${currentServiceId}/\${encodeURIComponent(key)}\`, {
       method: 'PUT',
       body: {
         value: value
