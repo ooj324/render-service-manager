@@ -87,7 +87,7 @@ export function renderDashboard() {
             </div>
           </div>
         </div>
-        <div class="filters">
+        <div class="filters" id="renderFilters">
           <div class="cache-info-wrapper">
             <span id="cacheInfo" class="cache-info"></span>
             <button type="button" id="refreshBtn" class="refresh-services-btn" title="刷新数据">
@@ -129,15 +129,59 @@ export function renderDashboard() {
             </button>
           </div>
         </div>
+        <div class="filters" id="neonFilters" style="display:none;">
+          <div class="cache-info-wrapper">
+            <span id="neonCacheInfo" class="cache-info"></span>
+            <button type="button" id="neonRefreshBtn" class="refresh-services-btn" title="刷新 Neon 项目">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+            </button>
+          </div>
+          <div class="search-box">
+            <input type="text" id="neonSearch" class="search-input" placeholder="搜索项目...">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
       </div>
 
+      <!-- Provider 标签栏 -->
+      <div class="dashboard-provider-tabs">
+        <button type="button" class="dashboard-tab active" data-tab="render">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 7L12 3L4 7M20 7L12 11M20 7V17L12 21M12 11L4 7M12 11V21M4 7V17L12 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Render 服务
+        </button>
+        <button type="button" class="dashboard-tab" data-tab="neon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="12" cy="12" rx="10" ry="5" stroke="currentColor" stroke-width="2"/>
+            <path d="M2 12c0 3 4.48 6 10 6s10-3 10-6" stroke="currentColor" stroke-width="2"/>
+            <line x1="12" y1="7" x2="12" y2="17" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          Neon 项目
+        </button>
+      </div>
+
+      <!-- Render 加载和内容 -->
       <div id="loading" class="loading">
         <div class="spinner"></div>
         <p>加载服务中...</p>
       </div>
-
       <div id="services-container" class="services-grid" style="display: none;">
         <!-- 服务将在这里动态加载 -->
+      </div>
+
+      <!-- Neon 加载和内容 -->
+      <div id="neonLoading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>加载 Neon 项目中...</p>
+      </div>
+      <div id="neon-container" class="services-grid" style="display: none;">
+        <!-- Neon 项目将在这里动态加载 -->
       </div>
     </div>
   </div>
@@ -333,6 +377,28 @@ export function renderDashboard() {
             <button class="scale-btn" data-action="adjust-scale" data-delta="1" type="button">+</button>
             <button class="action-btn primary" data-action="apply-scale" type="button">应用</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Neon 项目详情模态框 -->
+  <div id="neonProjectModal" class="modal">
+    <div class="modal-content modal-wide">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title-section">
+            <h2 class="modal-title">Neon 项目详情</h2>
+            <button class="modal-close" data-action="close-neon-project-modal" type="button">×</button>
+          </div>
+          <div class="modal-service-info" id="neonProjectModalInfo">
+            <!-- 项目信息将在这里插入 -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="neonProjectDetails">
+          <!-- 项目详情将在这里加载 -->
         </div>
       </div>
     </div>

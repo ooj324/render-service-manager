@@ -3097,4 +3097,114 @@ h1 {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Dashboard Provider Tabs */
+.dashboard-provider-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 0;
+}
+
+.dashboard-tab {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-bottom: -1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.dashboard-tab:hover {
+  color: var(--text-primary);
+}
+
+.dashboard-tab.active {
+  border-bottom-color: var(--accent-terracotta);
+  color: var(--accent-terracotta);
+  font-weight: 600;
+}
+
+/* Neon Resource Styling */
+.neon-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.neon-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+}
+
+.neon-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+}
+
+.neon-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.neon-item {
+  background: var(--bg-paper);
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+
+.neon-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.neon-item-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.neon-item-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Neon Project Modal Fixes */
+.modal-wide {
+  max-width: 1000px !important;
+}
+
+@media (max-width: 768px) {
+  .dashboard-provider-tabs {
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 5px;
+  }
+  .dashboard-tab {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+  .neon-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
 `;

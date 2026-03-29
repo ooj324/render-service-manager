@@ -7,9 +7,12 @@ let currentAccountId = '';
 let currentServiceName = '';
 let allEnvVars = [];
 let allServices = [];
+let allNeonProjects = [];
+let currentProvider = 'render';
 let isFormVisible = false;
 let editingKey = null;
 let lastCachedAt = null;
+let lastNeonCachedAt = null;
 let currentViewMode = 'card';
 let logsAutoRefreshTimer = null;
 let isLogsAutoRefresh = false;
@@ -526,15 +529,307 @@ function createServiceCard(service) {
   return card;
 }
 
+// 切换视图提供商
+function switchProvider(provider) {
+  currentProvider = provider;
+  
+  // 更新标签样式
+  document.querySelectorAll('.dashboard-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.tab === provider);
+  });
+  
+  // 切换过滤器和容器
+  const renderFilters = document.getElementById('renderFilters');
+  const neonFilters = document.getElementById('neonFilters');
+  const renderContainer = document.getElementById('services-container');
+  const neonContainer = document.getElementById('neon-container');
+  const renderLoading = document.getElementById('loading');
+  const neonLoading = document.getElementById('neonLoading');
+  
+  if (provider === 'render') {
+    renderFilters.style.display = 'flex';
+    neonFilters.style.display = 'none';
+    renderContainer.style.display = allServices.length > 0 ? 'grid' : 'none';
+    neonContainer.style.display = 'none';
+    renderLoading.style.display = allServices.length === 0 ? 'flex' : 'none';
+    neonLoading.style.display = 'none';
+  } else {
+    renderFilters.style.display = 'none';
+    neonFilters.style.display = 'flex';
+    renderContainer.style.display = 'none';
+    neonContainer.style.display = allNeonProjects.length > 0 ? 'grid' : 'none';
+    renderLoading.style.display = 'none';
+    neonLoading.style.display = allNeonProjects.length === 0 ? 'flex' : 'none';
+    
+    if (allNeonProjects.length === 0) {
+      fetchNeonProjects();
+    }
+  }
+  
+  updateStats();
+}
+
+// 获取 Neon 项目
+async function fetchNeonProjects(forceRefresh) {
+  const refreshBtn = document.getElementById('neonRefreshBtn');
+  const loading = document.getElementById('neonLoading');
+  
+  if (refreshBtn) {
+    refreshBtn.disabled = true;
+    refreshBtn.classList.add('spinning');
+  }
+  
+  if (currentProvider === 'neon' && allNeonProjects.length === 0) {
+    loading.style.display = 'flex';
+  }
+
+  try {
+    const url = forceRefresh ? '/api/neon/projects?refresh=true' : '/api/neon/projects';
+    const response = await apiJson(url);
+
+    if (response && Array.isArray(response.projects)) {
+      allNeonProjects = response.projects;
+      lastNeonCachedAt = response.cachedAt;
+      updateNeonCacheInfo(response.cachedAt);
+    }
+
+    renderNeonProjects(allNeonProjects);
+    updateStats();
+
+    if (currentProvider === 'neon') {
+      loading.style.display = 'none';
+      document.getElementById('neon-container').style.display = 'grid';
+    }
+
+    if (forceRefresh) {
+      showNotification('Neon 项目数据已刷新', 'success');
+    }
+  } catch (error) {
+    console.error('获取 Neon 项目出错:', error);
+    if (currentProvider === 'neon') loading.style.display = 'none';
+    showNotification('加载 Neon 项目出错: ' + (error?.message || String(error)), 'error');
+  } finally {
+    if (refreshBtn) {
+      refreshBtn.disabled = false;
+      refreshBtn.classList.remove('spinning');
+    }
+  }
+}
+
+// 渲染 Neon 项目
+function renderNeonProjects(projects) {
+  const container = document.getElementById('neon-container');
+  const searchTerm = (document.getElementById('neonSearch')?.value || '').toLowerCase();
+  
+  const filtered = projects.filter(p => 
+    p.name.toLowerCase().includes(searchTerm) || 
+    (p.accountName || '').toLowerCase().includes(searchTerm)
+  );
+
+  container.innerHTML = '';
+
+  if (filtered.length === 0) {
+    container.innerHTML = \`
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="12" cy="12" rx="10" ry="5" stroke="#94a3b8" stroke-width="2"/>
+          <path d="M2 12c0 3 4.48 6 10 6s10-3 10-6" stroke="#94a3b8" stroke-width="2"/>
+        </svg>
+        <h3>未找到项目</h3>
+        <p>您的 Neon 账户下暂无项目。</p>
+      </div>
+    \`;
+    return;
+  }
+
+  filtered.forEach(project => {
+    const card = document.createElement('div');
+    card.className = 'service-card';
+    
+    card.innerHTML = \`
+      <div class="service-card-header">
+        <div class="service-header-top">
+          <h3 class="service-name">\${escapeHtml(project.name)}</h3>
+          <div class="service-badges">
+            <span class="service-type">Neon Project</span>
+            <span class="account-badge">\${escapeHtml(project.accountName || '')}</span>
+          </div>
+        </div>
+        <div class="service-meta">
+          <div class="meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C15.31 2 18 4.66 18 7.95C18 12.41 12 19 12 19S6 12.41 6 7.95C6 4.66 8.69 2 12 2M12 6C10.9 6 10 6.9 10 8C10 9.1 10.9 10 12 10C13.1 10 14 9.1 14 8C14 6.9 13.1 6 12 6Z" fill="currentColor"/></svg>
+            \${escapeHtml(project.region_id || 'N/A')}
+          </div>
+          <div class="meta-item">
+            PG \${escapeHtml(project.pg_version || '')}
+          </div>
+        </div>
+      </div>
+      <div class="service-card-body">
+        <div class="service-info-grid">
+          <div class="info-item">
+            <span class="info-label">项目 ID</span>
+            <span class="info-value" style="font-size: 11px; font-family: monospace;">\${escapeHtml(project.id)}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">创建于</span>
+            <span class="info-value">\${new Date(project.created_at).toLocaleDateString()}</span>
+          </div>
+        </div>
+        <div class="service-actions">
+          <button class="action-btn primary full-width" data-action="neon-details" data-account-id="\${project.accountId}" data-project-id="\${project.id}" data-project-name="\${escapeHtml(project.name)}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            查看详情
+          </button>
+        </div>
+      </div>
+    \`;
+    container.appendChild(card);
+  });
+}
+
+function updateNeonCacheInfo(cachedAt) {
+  const info = document.getElementById('neonCacheInfo');
+  if (info && cachedAt) {
+    info.textContent = '更新于 ' + formatCacheTime(cachedAt);
+  }
+}
+
 // 更新统计信息
 function updateStats() {
-  const totalServices = allServices.length;
-  const liveServices = allServices.filter(s => s.suspended !== 'suspended').length;
-  const accounts = [...new Set(allServices.map(s => s.accountName))];
+  if (currentProvider === 'render') {
+    const totalServices = allServices.length;
+    const liveServices = allServices.filter(s => s.suspended !== 'suspended').length;
+    const accounts = [...new Set(allServices.map(s => s.accountName))];
 
-  document.getElementById('totalServices').textContent = totalServices;
-  document.getElementById('liveServices').textContent = liveServices;
-  document.getElementById('totalAccounts').textContent = accounts.length;
+    document.getElementById('totalServices').textContent = totalServices;
+    document.getElementById('liveServices').textContent = liveServices;
+    document.getElementById('totalAccounts').textContent = accounts.length;
+  } else {
+    const totalProjects = allNeonProjects.length;
+    const activeProjects = allNeonProjects.length; // Neon projects don't have a simple suspended status at project level in list
+    const accounts = [...new Set(allNeonProjects.map(p => p.accountName))];
+
+    document.getElementById('totalServices').textContent = totalProjects;
+    document.getElementById('liveServices').textContent = activeProjects;
+    document.getElementById('totalAccounts').textContent = accounts.length;
+  }
+}
+
+// 打开 Neon 项目详情模态框
+async function openNeonProjectModal(accountId, projectId, projectName) {
+  lockBodyScroll();
+  const modal = document.getElementById('neonProjectModal');
+  const info = document.getElementById('neonProjectModalInfo');
+  const details = document.getElementById('neonProjectDetails');
+
+  info.replaceChildren(
+    document.createTextNode('查看 '),
+    (() => {
+      const strong = document.createElement('strong');
+      strong.textContent = projectName;
+      return strong;
+    })(),
+    document.createTextNode(' (' + projectId + ') 的资源详情')
+  );
+
+  details.innerHTML = '<div class="loading" style="padding: 2rem;"><div class="loading-spinner"></div><p>加载项目详情中...</p></div>';
+  modal.classList.add('show');
+
+  try {
+    const data = await apiJson('/api/neon/projects/' + accountId + '/' + projectId);
+    renderNeonProjectDetails(data);
+  } catch (error) {
+    console.error('获取 Neon 项目详情出错:', error);
+    details.innerHTML = \`
+      <div class="empty-state">
+        <h3>加载项目详情出错</h3>
+        <p>\${escapeHtml(error?.message || String(error))}</p>
+      </div>
+    \`;
+  }
+}
+
+// 渲染 Neon 项目详情
+function renderNeonProjectDetails(data) {
+  const container = document.getElementById('neonProjectDetails');
+  container.innerHTML = '';
+  
+  const grid = document.createElement('div');
+  grid.className = 'neon-details-grid';
+  
+  // Branches
+  const branchesSection = createNeonSection('分支 (Branches)', data.branches || [], (branch) => {
+    return \`
+      <div class="neon-item-header">
+        <span class="neon-item-name">\${escapeHtml(branch.name)}</span>
+        \${branch.primary ? '<span class="status-badge" style="background:#dcfce7;color:#166534;font-size:10px;padding:2px 6px;border-radius:4px;">Primary</span>' : ''}
+      </div>
+      <div class="neon-item-meta">ID: \${escapeHtml(branch.id)}</div>
+      <div class="neon-item-meta">状态: \${escapeHtml(branch.state || 'active')}</div>
+    \`;
+  });
+  
+  // Endpoints
+  const endpointsSection = createNeonSection('端点 (Endpoints)', data.endpoints || [], (ep) => {
+    const statusClass = ep.status === 'active' ? 'status-live' : 'status-suspended';
+    return \`
+      <div class="neon-item-header">
+        <span class="neon-item-name">\${escapeHtml(ep.host)}</span>
+        <span class="service-status \${statusClass}" style="font-size:10px;padding:2px 6px;">\${escapeHtml(ep.status)}</span>
+      </div>
+      <div class="neon-item-meta">类型: \${escapeHtml(ep.type)} | 规格: \${escapeHtml(ep.autoscaling_limit_min_cu)}-\${escapeHtml(ep.autoscaling_limit_max_cu)} CU</div>
+      <div class="neon-item-meta">ID: \${escapeHtml(ep.id)}</div>
+    \`;
+  });
+  
+  // Databases
+  const databasesSection = createNeonSection('数据库 (Databases)', data.databases || [], (db) => {
+    return \`
+      <div class="neon-item-header">
+        <span class="neon-item-name">\${escapeHtml(db.name)}</span>
+      </div>
+      <div class="neon-item-meta">所有者: \${escapeHtml(db.owner_name)}</div>
+    \`;
+  });
+  
+  grid.appendChild(branchesSection);
+  grid.appendChild(endpointsSection);
+  grid.appendChild(databasesSection);
+  container.appendChild(grid);
+}
+
+function createNeonSection(title, items, renderItemFn) {
+  const section = document.createElement('div');
+  section.className = 'neon-section';
+  
+  const h3 = document.createElement('h3');
+  h3.className = 'neon-section-title';
+  h3.textContent = title;
+  section.appendChild(h3);
+  
+  const list = document.createElement('div');
+  list.className = 'neon-item-list';
+  
+  if (items.length === 0) {
+    list.innerHTML = '<div class="neon-item-meta" style="text-align:center;padding:1rem;">无记录</div>';
+  } else {
+    items.forEach(item => {
+      const itemEl = document.createElement('div');
+      itemEl.className = 'neon-item';
+      itemEl.innerHTML = renderItemFn(item);
+      list.appendChild(itemEl);
+    });
+  }
+  
+  section.appendChild(list);
+  return section;
+}
+
+function closeNeonProjectModal() {
+  unlockBodyScroll();
+  const modal = document.getElementById('neonProjectModal');
+  modal.classList.remove('show');
 }
 
 function populateAccountFilter(services) {
@@ -1844,6 +2139,7 @@ function initEventDelegation() {
     'close-deploys-modal': closeDeploysModal,
     'close-logs-modal': closeLogsModal,
     'close-instances-modal': closeInstancesModal,
+    'close-neon-project-modal': closeNeonProjectModal,
   };
 
   document.addEventListener('click', async (event) => {
@@ -1887,6 +2183,16 @@ function initEventDelegation() {
   const searchInput = document.getElementById('serviceSearch');
   searchInput?.addEventListener('input', () => {
     applyFilters();
+  });
+
+  const neonSearchInput = document.getElementById('neonSearch');
+  neonSearchInput?.addEventListener('input', () => {
+    renderNeonProjects(allNeonProjects);
+  });
+
+  const neonRefreshBtn = document.getElementById('neonRefreshBtn');
+  neonRefreshBtn?.addEventListener('click', () => {
+    fetchNeonProjects(true);
   });
 
   const logLevelFilter = document.getElementById('logLevelFilter');
@@ -2063,21 +2369,17 @@ document.addEventListener('DOMContentLoaded', () => {
   window.currentProvider = 'render';
 
   // Provider Tab Switching
-  document.querySelectorAll('.provider-tab').forEach(tab => {
+  document.querySelectorAll('.dashboard-tab').forEach(tab => {
     tab.addEventListener('click', (e) => {
-      document.querySelectorAll('.provider-tab').forEach(t => t.classList.remove('active'));
-      e.target.classList.add('active');
-      window.currentProvider = e.target.dataset.provider;
+      const targetTab = e.currentTarget.dataset.tab;
+      if (!targetTab) return;
       
-      if (window.currentProvider === 'neon') {
-        if (window.fetchNeonProjects) window.fetchNeonProjects(false);
-      } else {
-        fetchServices(false);
-      }
+      switchProvider(targetTab);
     });
   });
 
   fetchServices();
+  fetchNeonProjects(); // 同时拉取 Neon 项目以便切换时快速显示
 
   // 刷新按钮事件
   const refreshBtn = document.getElementById('refreshBtn');
