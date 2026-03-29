@@ -37,27 +37,19 @@ function getOptions(apiKey, method = 'GET', body = null) {
  * @param {string} apiKey - Neon API 密钥
  * @returns {Promise<Object>} 用户信息和权限
  */
-export async function testAuth(apiKey) {
-  try {
-    // 尝试获取项目列表作为认证测试
-    const response = await fetchWithRetry(`${NEON_API_BASE}/projects`, getOptions(apiKey, 'GET'));
-    if (!response || !Array.isArray(response.projects)) {
-      throw new Error('API 响应格式无法识别');
-    }
-    return {
-      success: true,
-      ownerType: 'user', // Neon API does not immediately return user info from /projects
-      ownerName: 'Neon Account',
-      ownerEmail: 'verified@neon.tech'
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message
-    };
+export async function testApiKey(apiKey) {
+  // 尝试获取项目列表作为认证测试
+  const response = await fetchWithRetry(`${NEON_API_BASE}/projects`, getOptions(apiKey, 'GET'));
+  if (!response || !Array.isArray(response.projects)) {
+    throw new Error('API 响应格式无法识别');
   }
+  return {
+    success: true,
+    ownerType: 'user',
+    ownerName: 'Neon Account',
+    ownerEmail: 'verified@neon.tech'
+  };
 }
-
 /**
  * 获取项目列表
  * @param {string} apiKey - Neon API 密钥
