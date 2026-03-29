@@ -8,6 +8,7 @@ import { sharedScript } from './sharedScript.js';
 const accountsScript = `
 let accounts = [];
 let editingAccountId = null;
+let currentProvider = 'render';
 
 
 // 格式化日期
@@ -53,16 +54,18 @@ function renderAccounts() {
   const container = document.getElementById('accountsList');
   const totalAccounts = document.getElementById('totalAccounts');
 
-  totalAccounts.textContent = accounts.length;
+  const filteredAccounts = accounts.filter(a => (a.provider || 'render') === currentProvider);
 
-  if (accounts.length === 0) {
+  totalAccounts.textContent = filteredAccounts.length;
+
+  if (filteredAccounts.length === 0) {
     container.innerHTML = \`
       <div class="empty-state">
         <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5">
           <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
         </svg>
-        <h3>暂无账户</h3>
-        <p>添加您的第一个账户开始管理服务</p>
+        <h3>暂无当前服务商账户</h3>
+        <p>添加您的账户开始管理服务</p>
         <button class="add-account-btn" type="button" data-action="open-add-modal" style="margin-top: 1.5rem;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 5v14M5 12h14"/>
@@ -74,7 +77,7 @@ function renderAccounts() {
     return;
   }
 
-  container.innerHTML = accounts.map(account => \`
+  container.innerHTML = filteredAccounts.map(account => \`
     <div class="service-card account-card">
       <div class="service-card-header">
         <div class="service-header-top">
@@ -403,6 +406,28 @@ function initEventDelegation() {
 document.addEventListener('DOMContentLoaded', function() {
   initEventDelegation();
   fetchAccounts();
+
+  document.querySelectorAll('.provider-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      document.querySelectorAll('.provider-tab').forEach(t => {
+        t.style.borderBottomColor = 'transparent';
+        t.style.color = '#64748b';
+        t.style.fontWeight = '500';
+        t.classList.remove('active');
+      });
+      e.target.style.borderBottomColor = '#3b82f6';
+      e.target.style.color = '#3b82f6';
+      e.target.style.fontWeight = '600';
+      e.target.classList.add('active');
+      currentProvider = e.target.dataset.provider;
+      
+      // Auto-select dropdown when adding account based on tab
+      const accountProviderSelect = document.getElementById('accountProvider');
+      if (accountProviderSelect) accountProviderSelect.value = currentProvider;
+      
+      renderAccounts();
+    });
+  });
 });
 `;
 
@@ -417,7 +442,7 @@ export function renderAccountsPage() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>账户管理 - Render Service Manager</title>
+  <title>账户管理 - Service Management</title>
   <style nonce="__CSP_NONCE__">${dashboardStyles}</style>
 </head>
 <body>
@@ -429,7 +454,7 @@ export function renderAccountsPage() {
             <path d="M12 2L2 7V12C2 16.5 4.23 20.68 7.62 23.15L12 25L16.38 23.15C19.77 20.68 22 16.5 22 12V7L12 2M12 4.18L19.25 7.8V12C19.25 15.58 17.58 18.85 15 20.75V13.25H9V20.75C6.42 18.85 4.75 15.58 4.75 12V7.8L12 4.18Z" />
           </svg>
         </div>
-        <h1>Render Manager</h1>
+        <h1>Service Management</h1>
       </a>
       <div class="header-actions">
         <a href="/" class="header-link">
@@ -476,10 +501,16 @@ export function renderAccountsPage() {
         </button>
       </div>
 
+      <div class="provider-tabs" style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0px;">
+        <button class="provider-tab active" data-provider="render" style="padding: 0.75rem 1.5rem; background: transparent; border: none; border-bottom: 2px solid #3b82f6; color: #3b82f6; font-weight: 600; cursor: pointer; font-size: 1rem; margin-bottom: -1px;">Render 账户</button>
+        <button class="provider-tab" data-provider="neon" style="padding: 0.75rem 1.5rem; background: transparent; border: none; border-bottom: 2px solid transparent; color: #64748b; font-weight: 500; cursor: pointer; font-size: 1rem; margin-bottom: -1px;">Neon 账户</button>
+      </div>
+
       <div id="loading" class="loading">
         <div class="spinner"></div>
         <p>加载账户中...</p>
       </div>
+
 
       <div id="accounts-container" style="display: none;">
         <div class="services-grid" id="accountsList">
@@ -490,7 +521,7 @@ export function renderAccountsPage() {
   </div>
 
   <footer class="footer">
-    <p>© 2025 Render Service Manager | <a href="https://github.com/ssfun/render-service-manager" target="_blank" rel="noopener noreferrer">@sfun</a></p>
+    <p>© 2025 Service Management | <a href="https://github.com/ssfun/render-service-manager" target="_blank" rel="noopener noreferrer">@sfun</a></p>
   </footer>
 
   <!-- 添加/编辑账户模态框 -->
@@ -508,7 +539,7 @@ export function renderAccountsPage() {
             <label class="form-label" for="accountProvider">服务提供商</label>
             <select id="accountProvider" class="form-input">
               <option value="render">Render</option>
-              <option value="neon" disabled>Neon (即将支持)</option>
+              <option value="neon">Neon</option>
             </select>
           </div>
 
@@ -518,7 +549,7 @@ export function renderAccountsPage() {
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="accountApiKey">Render API Key</label>
+            <label class="form-label" for="accountApiKey">API Key</label>
             <div class="test-btn-row">
               <input type="text" id="accountApiKey" class="form-input api-key-input" placeholder="rnd_xxxxxxxxxx">
               <button type="button" id="testBtn" class="action-btn secondary" data-action="test-connection">

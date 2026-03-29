@@ -5,9 +5,9 @@
 
 一个现代化的 Render 服务管理面板，让你能够集中管理多个 Render 账户中的 WEB_SERVICE 服务。提供账户管理、服务监控、部署控制、环境变量管理、日志查看和实例管理等完整功能。
 
-![Render Service Manager Dashboard](./preview/01.png "Dashboard Preview")
+![Service Management Dashboard](./preview/01.png "Dashboard Preview")
 
-![Render Service Manager Account](./preview/02.png "Account Preview")
+![Service Management Account](./preview/02.png "Account Preview")
 
 ## 💡 特性
 
@@ -133,7 +133,7 @@
    - 访问部署后的 URL
    - 使用配置的用户名密码登录
    - 点击右上角"账户管理"
-   - 点击"添加账户"，输入名称和 Render API Key
+   - 点击"添加账户"，输入名称和 API Key
 
 ### 方式 2: 手动部署（无需 Wrangler CLI）
 

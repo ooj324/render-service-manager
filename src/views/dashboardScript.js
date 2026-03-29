@@ -151,7 +151,7 @@ function renderServices(services) {
           <path d="M20 7L12 3L4 7M20 7L12 11M20 7V17L12 21M12 11L4 7M12 11V21M4 7V17L12 21" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <h3>未找到服务</h3>
-        <p>请先前往<a href="/accounts" style="color: #3b82f6; text-decoration: underline;">账户管理</a>添加您的 Render 账户。</p>
+        <p>请先前往<a href="/accounts" style="color: #3b82f6; text-decoration: underline;">账户管理</a>添加您的提供商账户。</p>
       </div>
     \`;
     return;

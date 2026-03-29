@@ -15,7 +15,7 @@ export function renderLoginPage(error = '') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Render Service Management - Login</title>
+  <title>Service Management - Login</title>
   <style nonce="__CSP_NONCE__">${loginStyles}</style>
 </head>
 <body>
@@ -26,7 +26,7 @@ export function renderLoginPage(error = '') {
           <path d="M12 2L2 7V12C2 16.5 4.23 20.68 7.62 23.15L12 25L16.38 23.15C19.77 20.68 22 16.5 22 12V7L12 2M12 4.18L19.25 7.8V12C19.25 15.58 17.58 18.85 15 20.75V13.25H9V20.75C6.42 18.85 4.75 15.58 4.75 12V7.8L12 4.18Z" />
         </svg>
       </div>
-      <h1>Render Manager</h1>
+      <h1>Service Management</h1>
       <p class="subtitle">登录您的账户</p>
     </div>
 
@@ -46,7 +46,7 @@ export function renderLoginPage(error = '') {
     </form>
 
     <div class="footer">
-      <p>© 2025 Render Service Manager | <a href="https://github.com/ssfun/render-service-manager" target="_blank" rel="noopener noreferrer">@sfun</a></p>
+      <p>© 2025 Service Management | <a href="https://github.com/ssfun/render-service-manager" target="_blank" rel="noopener noreferrer">@sfun</a></p>
     </div>
   </div>
   <script nonce="__CSP_NONCE__">${sharedScript}</script>
